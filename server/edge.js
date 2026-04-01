@@ -8,8 +8,7 @@ const app = express();
 const redis= new Redis();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const TIME_API_URL = 'https://worldtimeapi.org/api/timezone/Etc/UTC';
-const RESPONSE_MESSAGE = 'Protected edge response';
+
 const PORT = process.env.PORT || 3001;
 
 
@@ -19,7 +18,8 @@ async function rateLimit(ip){
 
     if(count == 1){
         //expire in 10seconds
-        return redis.expire(key,10);
+        await redis.expire(key,10);
+        return true;
     }
 
     if(count > 20) return false;
@@ -44,7 +44,7 @@ function detectBot(req){
     if(
         userAgent.includes("curl") ||
         userAgent.includes("bot") ||
-        userAgent.includes("scrapper") 
+        userAgent.includes("scraper") 
     )return true;
 
     return false;
@@ -98,7 +98,7 @@ app.use(async (req,res,next)=> {
     if(detectBot(req)){
         if(!await isVerified(ip)){
         //     return res.status(403).send("Please verify you are human by visiting /verify?answer=17")
-        return res.sendFile(__dirname+ "/captcha.html");
+        return res.sendFile(path.join(__dirname, "captcha.html"));
         }
     }
 
@@ -125,6 +125,6 @@ app.get('/', async (req, res) => {
     }
 });
 
-app.listen(3001, () => {
-    console.log(`Listening on PORT: ${3001}`);
+app.listen(PORT, () => {
+    console.log(`Listening on PORT: ${PORT}`);
 });
